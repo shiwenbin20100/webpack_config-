@@ -1,0 +1,13 @@
+body{
+    width: 100%;
+    height: 100%;
+    background: #fee;
+    font-size: 16px;
+    margin-top: 10px;
+    margin-left: 10px;
+    margin-bottom: 10px;
+}
+/*egererdbdzfzd*/
+ul{
+    margin-top: calc(100px * 2);
+}
