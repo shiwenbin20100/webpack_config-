@@ -11,3 +11,11 @@ body{
 ul{
     margin-top: calc(100px * 2);
 }
+::placeholder {
+    color: #fee
+}
+@media (min-resolution: 2dppx) {
+    .image {
+        width: 100%;
+    }
+}
