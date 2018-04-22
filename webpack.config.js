@@ -6,6 +6,8 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 
+const nodeExternals = require("webpack-node-externals");
+
 const env = process.argv[process.argv.length - 1]
 console.log(env) 
 
@@ -14,10 +16,15 @@ const defaultPath = {
 }
 
 module.exports = {
-    entry:{
-        app: "./src/app.js",
-        vendor: ["./src/components/bpp.js"]//需要作为vendor块打包的文件
-    },
+    mode:"development",
+    entry:[
+        "./src/app.js",
+        "webpack-hot-middleware/client?reload=true"
+    ],
+    // entry:{
+    //     app: "./src/app.js",
+    //     vendor: ["./src/components/bpp.js"]//需要作为vendor块打包的文件
+    // },
     target:"web",//告诉webpack当前运行的环境，"node"代表nodejs环境,如文件采用require方式引用
     output: {
         filename: env==="production"?"js/[name]_[hash:8].js":"app.js",
@@ -26,17 +33,17 @@ module.exports = {
         publicPath: "/assets/",//打包后的资源的引用路径=publicPath+资源名
         chunkFilename:'js/[name]_[chunkhash:8].chunk.js',//用于打包按需加载的文件
         libraryTarget: 'var'//告诉webpack使用什么样的规范,常用的有
-                                  //1."commonjs2":用于node环境,即打包后的文件内会以module.exports={}的形式来组织代码
-                                  //2."umd"用umd的模块化写法
+                            //1."commonjs2":用于node环境,即打包后的文件内会以module.exports={}的形式来组织代码
+                            //2."umd"用umd的模块化写法
     },
     module: {
-        noParse: (content) => {
+        // noParse: (content) => {
             /**
              * 不会解析满足条件的文件中的依赖关系
              * 因此noParse的文件中不应有import,require,define的调用
              */
-            return /rxjs/.test(content);
-        },
+            // return /rxjs/.test(content);
+        // },
         rules: [
             {
                 test: /\.js$/,
@@ -129,24 +136,21 @@ module.exports = {
             basePath: "/haha"//同publicPath,但加到key前
         }),
         new MiniCssExtractPlugin({
-            // Options similar to the same options in webpackOptions.output
-            // both options are optional
+            //打包css文件
             filename: env==="production"?"css/[name]_[hash:8].css":"[name].css",
             chunkFilename: env==="production"?"css/[id]_[hash:8].css":"[id].css"
           })
     ],
     optimization: {
         splitChunks: {
-            /**
-             * 配置需要单独打包的块
-             */
+            //配置需要单独打包的块
             chunks: "async",//"initial"=>打包初始块;"async"=>打包按需加载的块;"all"=>打包所有块
 
             //webpack默认根据以下四个条件进行打包
             minSize: 30000,//每个块的最小大小
-            minChunks: 2,//表示在拆分前,最少有2个文件重用了此模块
+            minChunks: 2,//模块被至少2个其他文件引用
             maxAsyncRequests: 5,//被按需加载的最大次数
-            maxInitialRequests: 3,//加载初始页面时的最大请求数
+            maxInitialRequests: 3,//加载初始页面时的最大请求次数
 
             automaticNameDelimiter: '~',//块名与文件名中间的分隔符,如"vendor~app.js"
             name: true,
@@ -180,12 +184,10 @@ module.exports = {
                 sourceMap: true,//是否生成SourceMap
             }),
             new OptimizeCSSAssetsPlugin({
-                /**
-                 * 用于压缩CSS
-                 */
+                //用于压缩CSS
                 cssProcessor: require('cssnano'),//用于优化|压缩CSS的处理器,默认使用cssnano
                 cssProcessorOptions: { 
-                    //具体可配置内容见
+                    //cssnano具体可配置内容见
                     //http://cssnano.co/optimisations/
                     discardComments: { 
                         removeAll: true//移除所有注释
@@ -223,10 +225,12 @@ module.exports = {
     devServer: {
         historyApiFallback: true
     },
-    externals: {
+    externals: [{
         /**
          * 如果希望从如cdn等地方引入外部模块,可以设置external来使webpack不打包指定内容
          */
-        // jquery: "jQuery"//意思是:当require("jquery")时，你需要将jQuery暴露出来作为全局变量来使用
-    }
+        // jquery: "jQuery"//意思是:当require("jquery")时，你就会得到一个全局变量"jQuery"
+    },
+    // nodeExternals() //用于构建后端应用，不写参数表示不打包所有node_modules目录下的文件
+    ]
 }
